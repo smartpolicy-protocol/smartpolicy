@@ -1,0 +1,17 @@
+{
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "deployedAt": "2026-07-05",
+  "deployer": "0xaC7B68fd202717Bc57996c6FA7c1DB39264b4Aee",
+  "contracts": {
+    "PolicyRegistry": "0x8BD5f8850c2983219193d4527E113d0e5F8E57Ed",
+    "GrantVerifier": "0x72C01F28659B5b49B8425A4179680c916485F2E6"
+  },
+  "fees": {
+    "creationFee": "0.0001 ether",
+    "updateFee": "0.00001 ether",
+    "maxCreationFee": "0.01 ether",
+    "maxUpdateFee": "0.001 ether"
+  },
+  "notes": "Canonical testnet deployment (planned per PLAN.md). Deployed via `smartpolicy-mcp deploy` from embedded bytecode; both contracts source-verified on Blockscout (base-sepolia.blockscout.com). Genesis policy #1: metadataURI ipfs://smartpolicy-genesis-v2 with on-chain metadataHash (keccak256 of the URI). Deployer is a fresh testnet-only key generated 2026-07-05 (funded via Google faucet on Ethereum Sepolia, bridged through the official L1StandardBridge 0xfd0Bf71F60660E2f608ed56e1659C450eB113120); key stored locally outside the repo. Deployer = protocol owner = fee collector. Fresh keys for any mainnet deploy."
+}

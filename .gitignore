@@ -1,0 +1,26 @@
+# Environment / secrets — never commit keys or RPC credentials
+.env
+.env.*
+*.key
+
+# Node
+node_modules/
+dist/
+
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Local databases (MCP event index)
+*.sqlite
+*.db
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+.vs/
+*.tgz

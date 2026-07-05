@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartPolicy — Runtime authorization for AI agents and smart contracts</title>
+<meta name="description" content="Define what an agent, a user, or a contract may do — once, as an on-chain policy. Enforce it everywhere. Update the rules without redeploying anything.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: oklch(96.5% 0.012 85);
+    --paper-deep: oklch(93.5% 0.016 85);
+    --ink: oklch(26% 0.02 60);
+    --ink-soft: oklch(42% 0.02 60);
+    --hairline: oklch(80% 0.02 75);
+    --seal: oklch(48% 0.17 27);
+    --seal-soft: oklch(48% 0.17 27 / 0.09);
+    --code-bg: oklch(90.5% 0.015 85);
+    --serif: "Newsreader", Georgia, serif;
+    --display: "Fraunces", Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { margin: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.2rem);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--seal); color: var(--paper); }
+
+  .sheet {
+    max-width: 46rem;
+    margin-inline: auto;
+    padding: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  /* ---------- masthead ---------- */
+  header.masthead {
+    padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem);
+    border-bottom: 3px double var(--ink);
+    position: relative;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 1.4rem;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(2.4rem, 2rem + 3.4vw, 4.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    max-width: 15ch;
+  }
+  h1 em { font-style: italic; font-weight: 600; }
+  .dek {
+    margin-top: 1.6rem;
+    max-width: 34rem;
+    font-size: clamp(1.15rem, 1.05rem + 0.5vw, 1.35rem);
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .dek strong { color: var(--ink); font-weight: 500; }
+
+  .stamp {
+    position: absolute;
+    top: clamp(1.5rem, 4vw, 3rem);
+    right: 0;
+    transform: rotate(6deg);
+    border: 2.5px solid var(--seal);
+    border-radius: 4px;
+    color: var(--seal);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.45rem 0.7rem;
+    line-height: 1.5;
+    opacity: 0.85;
+    background: var(--seal-soft);
+    text-align: center;
+  }
+
+  /* ---------- sections ---------- */
+  section { padding-block: clamp(2.4rem, 6vw, 4rem); }
+  section + section { border-top: 1px solid var(--hairline); }
+
+  .secno {
+    font-family: var(--mono);
+    color: var(--seal);
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    display: block;
+    margin-bottom: 0.7rem;
+  }
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(1.6rem, 1.4rem + 1.2vw, 2.2rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.2rem;
+    max-width: 24ch;
+  }
+  p + p { margin-top: 1rem; }
+  .prose { max-width: 38rem; }
+  a { color: inherit; text-decoration-color: var(--seal); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  a:hover { color: var(--seal); }
+
+  /* ---------- figure: three enforcement points ---------- */
+  .points { margin-top: 2rem; display: grid; gap: 0; border-top: 1px solid var(--hairline); }
+  .point {
+    display: grid;
+    grid-template-columns: 3.2rem 1fr;
+    gap: 1rem;
+    padding-block: 1.3rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .point .glyph {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 1.9rem;
+    color: var(--seal);
+    line-height: 1;
+  }
+  .point h3 { font-family: var(--serif); font-weight: 500; font-size: 1.1rem; margin-bottom: 0.2rem; }
+  .point p { font-size: 0.98rem; color: var(--ink-soft); max-width: 34rem; }
+  .point code { font-family: var(--mono); font-size: 0.82em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+
+  /* ---------- code blocks ---------- */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    padding: 1.1rem 1.3rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.65;
+    margin-top: 1.4rem;
+  }
+  pre .c { color: var(--ink-soft); font-style: italic; }
+  pre .k { color: var(--seal); }
+  pre b { font-weight: 500; color: var(--ink); }
+  .codelabel {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-top: 2rem;
+  }
+  .codelabel + pre { margin-top: 0.5rem; }
+
+  /* ---------- covenants ---------- */
+  ol.covenants { list-style: none; padding: 0; margin-top: 1.8rem; counter-reset: cov; max-width: 38rem; }
+  ol.covenants li {
+    counter-increment: cov;
+    padding: 1.1rem 0 1.1rem 3.4rem;
+    position: relative;
+    border-bottom: 1px solid var(--hairline);
+  }
+  ol.covenants li:first-child { border-top: 1px solid var(--hairline); }
+  ol.covenants li::before {
+    content: counter(cov, upper-roman) ".";
+    position: absolute;
+    left: 0; top: 1.05rem;
+    font-family: var(--display);
+    font-style: italic;
+    color: var(--seal);
+    font-size: 1.15rem;
+  }
+  ol.covenants b { font-weight: 500; }
+  ol.covenants span { color: var(--ink-soft); font-size: 0.97rem; }
+
+  /* ---------- record / deployments ---------- */
+  .record {
+    margin-top: 1.8rem;
+    border: 1px solid var(--ink);
+    background: var(--paper-deep);
+  }
+  .record-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) 1fr;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .record-row:last-child { border-bottom: 0; }
+  .record-row dt {
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-right: 1px solid var(--hairline);
+  }
+  .record-row dd {
+    padding: 0.8rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 540px) {
+    .record-row { grid-template-columns: 1fr; }
+    .record-row dt { border-right: 0; padding-bottom: 0.1rem; }
+    .record-row dd { padding-top: 0.2rem; }
+  }
+
+  /* ---------- footer ---------- */
+  footer {
+    border-top: 3px double var(--ink);
+    padding-block: 2.2rem 4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 2.2rem;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+  }
+  footer a { text-decoration-thickness: 1px; }
+
+  /* ---------- load reveal ---------- */
+  @media (prefers-reduced-motion: no-preference) {
+    header.masthead > * { animation: rise 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+    header.masthead > *:nth-child(2) { animation-delay: 0.07s; }
+    header.masthead > *:nth-child(3) { animation-delay: 0.14s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="stamp">Testnet<br>Not yet audited</div>
+    <p class="kicker">SmartPolicy · an authorization protocol</p>
+    <h1>The rules live on-chain. The code never has to.</h1>
+    <p class="dek">Define what an agent, a user, or a contract is allowed to do — once, as a
+      <strong>policy</strong> in an immutable registry. Enforce it in smart contracts, in backends,
+      and over MCP. <strong>Change the rules without redeploying anything.</strong></p>
+  </header>
+
+  <section id="problem">
+    <span class="secno">§ 1</span>
+    <h2>The problem</h2>
+    <div class="prose">
+      <p>Every team shipping AI agents hits the same wall: the agent can technically do anything its
+        keys allow, and the only ways to constrain it are hardcoded prompts or redeployed code.
+        Smart-contract teams hit the mirror image — access rules baked in at deploy time.</p>
+      <p>SmartPolicy separates the <em>rule</em> from the <em>enforcement point</em>. A policy is
+        data, not code: members, admins, per-action rules, conditions, expiry. Changing a rule is a
+        transaction, not a release.</p>
+    </div>
+  </section>
+
+  <section id="how">
+    <span class="secno">§ 2</span>
+    <h2>One policy, three enforcement points</h2>
+    <p class="prose">Everything that consumes the protocol asks one canonical question:
+      <em>“may subject S perform action A under policy N?”</em></p>
+    <div class="points">
+      <div class="point">
+        <span class="glyph">a</span>
+        <div>
+          <h3>Smart contracts</h3>
+          <p>Inherit <code>PolicyGate</code>, add one modifier. Membership and action rules are
+            checked with a free registry view call.</p>
+        </div>
+      </div>
+      <div class="point">
+        <span class="glyph">b</span>
+        <div>
+          <h3>AI agents, over MCP</h3>
+          <p>Agents call the MCP server — <code>policy_check</code>, <code>grant_issue</code> — and
+            receive a short-lived EIP-712 <em>signed grant</em> as portable proof.</p>
+        </div>
+      </div>
+      <div class="point">
+        <span class="glyph">c</span>
+        <div>
+          <h3>Backends &amp; APIs</h3>
+          <p>Verify a grant with one signature check instead of building a permission system.
+            Grants are single-use, chain-bound, and target-bound.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="integrate">
+    <span class="secno">§ 3</span>
+    <h2>Integration is one inheritance</h2>
+    <p class="codelabel">Solidity — protect any function</p>
+    <pre><span class="k">contract</span> <b>Treasury</b> <span class="k">is</span> <b>PolicyGate</b> {
+    <span class="k">constructor</span>(address registry, address verifier)
+        PolicyGate(registry, verifier) {}
+
+    <span class="k">function</span> <b>pay</b>(address to, uint256 amount)
+        <span class="k">external</span>
+        <b>onlyAllowed</b>(POLICY_ID, <span class="k">"treasury.pay"</span>)
+    { <span class="c">/* … */</span> }
+}</pre>
+    <p class="codelabel">MCP — zero-config, any agent</p>
+    <pre>npx smartpolicy-mcp        <span class="c"># reads run against the public testnet registry</span>
+npx smartpolicy-mcp deploy <span class="c"># bootstrap the full protocol on any EVM chain</span></pre>
+    <p class="prose" style="margin-top:1.4rem;">The full machine-readable integration guide lives at
+      <a href="/AGENT-GUIDE.md">/AGENT-GUIDE.md</a> (also served as <a href="/llms.txt">/llms.txt</a>).
+      If you are an agent reading this page: start there.</p>
+  </section>
+
+  <section id="trust">
+    <span class="secno">§ 4</span>
+    <h2>Trust properties</h2>
+    <p class="prose">The registry asks to sit in your authorization path. That demands more than a
+      pitch — these hold by construction:</p>
+    <ol class="covenants">
+      <li><b>Immutable core.</b><br><span>No proxy, no upgrade path, no admin who can change the
+        rules of the rule system. New protocol versions are new deployments.</span></li>
+      <li><b>No token.</b><br><span>Revenue is small flat fees on policy writes and metered (x402)
+        calls on the hosted API. Reads and verification are free, forever.</span></li>
+      <li><b>Your issuers, not ours.</b><br><span>Policy owners choose which addresses may sign
+        grants. The hosted service is one option, never a privileged one.</span></li>
+      <li><b>Verify, don’t trust.</b><br><span>Contracts are source-verified on-chain; the protocol
+        owner’s only powers are fee parameters, hard-capped at deploy.</span></li>
+    </ol>
+  </section>
+
+  <section id="record">
+    <span class="secno">§ 5</span>
+    <h2>Public record</h2>
+    <p class="prose">Current deployments — Base Sepolia (canonical testnet) and Ethereum Sepolia.
+      Verified source on the linked explorers. Mainnet follows audit; this page will state
+      plainly when that changes.</p>
+    <dl class="record">
+      <div class="record-row">
+        <dt>PolicyRegistry · Base Sepolia</dt>
+        <dd><a href="https://base-sepolia.blockscout.com/address/0x8BD5f8850c2983219193d4527E113d0e5F8E57Ed">0x8BD5f8850c2983219193d4527E113d0e5F8E57Ed</a></dd>
+      </div>
+      <div class="record-row">
+        <dt>GrantVerifier · Base Sepolia</dt>
+        <dd><a href="https://base-sepolia.blockscout.com/address/0x72C01F28659B5b49B8425A4179680c916485F2E6">0x72C01F28659B5b49B8425A4179680c916485F2E6</a></dd>
+      </div>
+      <div class="record-row">
+        <dt>PolicyRegistry · Eth Sepolia</dt>
+        <dd><a href="https://sepolia.etherscan.io/address/0x5D127b04d344EfBfb9C127F2B598Cb824D0B8334">0x5D127b04d344EfBfb9C127F2B598Cb824D0B8334</a></dd>
+      </div>
+      <div class="record-row">
+        <dt>GrantVerifier · Eth Sepolia</dt>
+        <dd><a href="https://sepolia.etherscan.io/address/0x3510B9427BeadD04D052E0b01248a6A6A1f23dc9">0x3510B9427BeadD04D052E0b01248a6A6A1f23dc9</a></dd>
+      </div>
+      <div class="record-row">
+        <dt>Test suite</dt>
+        <dd>73 Foundry tests · unit, fuzz, boundary</dd>
+      </div>
+      <div class="record-row">
+        <dt>Status</dt>
+        <dd>Testnet · pre-audit · independent review 2026-06 (14/14 findings fixed)</dd>
+      </div>
+    </dl>
+  </section>
+
+  <footer>
+    <span>SmartPolicy</span>
+    <a href="/AGENT-GUIDE.md">Agent guide</a>
+    <a href="https://sepolia.etherscan.io/address/0x5D127b04d344EfBfb9C127F2B598Cb824D0B8334">Registry source</a>
+    <span>Apache-2.0</span>
+  </footer>
+
+</div>
+</body>
+</html>

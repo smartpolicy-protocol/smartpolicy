@@ -1,0 +1,18 @@
+{
+  "network": "ethereum-sepolia",
+  "chainId": 11155111,
+  "deployedAt": "2026-06-12",
+  "deployer": "0x3E8B9bcbB40652468b4b40c052add9442F2C9100",
+  "contracts": {
+    "PolicyRegistry": "0x5D127b04d344EfBfb9C127F2B598Cb824D0B8334",
+    "GrantVerifier": "0x3510B9427BeadD04D052E0b01248a6A6A1f23dc9"
+  },
+  "fees": {
+    "creationFee": "0.0001 ether",
+    "updateFee": "0.00001 ether",
+    "maxCreationFee": "0.01 ether",
+    "maxUpdateFee": "0.001 ether"
+  },
+  "grantVerifierStatus": "CURRENT — GrantVerifier redeployed 2026-06-12 with the 8-field target-bound Grant struct (REVIEW.md M1), Etherscan-verified, registry() points at the registry below. A just-issued grant verifies immediately on Sepolia (skew buffer in the issuer). Prior verifiers 0x7524430e (pre-target) and 0xB0fdDA1A (pre-metadataHash) are abandoned.",
+  "notes": "PolicyRegistry 0x5D127b is unchanged across the M1 round; only the GrantVerifier was redeployed (against the same registry). Genesis policy #1: metadataURI ipfs://smartpolicy-genesis-v2 with on-chain metadataHash. Abandoned: 0x6240B209/0xB0fdDA1A (pre-metadataHash), 0x7524430e (pre-target verifier), stray 0x5607CEC6 (failed broadcast). Deployer key is the 2025 prototype's testnet key — testnet only; fresh keys for any mainnet deploy."
+}
