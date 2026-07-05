@@ -1,0 +1,49 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.smartpolicy-protocol/smartpolicy",
+  "description": "Runtime authorization for AI agents and smart contracts via an immutable on-chain policy registry",
+  "repository": {
+    "url": "https://github.com/smartpolicy-protocol/smartpolicy",
+    "source": "github"
+  },
+  "websiteUrl": "https://smartpolicy.io",
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@smartpolicy/mcp",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "SMARTPOLICY_REGISTRY",
+          "description": "PolicyRegistry contract address (omit for the public Sepolia default)",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "SMARTPOLICY_VERIFIER",
+          "description": "GrantVerifier contract address (omit for the public Sepolia default)",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "SMARTPOLICY_RPC_URL",
+          "description": "EVM RPC endpoint (omit for the public Sepolia default)",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "SMARTPOLICY_ISSUER_KEY",
+          "description": "Optional grant-issuer private key; enables the grant_issue tool",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
