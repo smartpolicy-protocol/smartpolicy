@@ -19,6 +19,14 @@
     "smoke:http": "tsx scripts/http-smoke.ts"
   },
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smartpolicy-protocol/smartpolicy.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://smartpolicy.io",
+  "bugs": "https://github.com/smartpolicy-protocol/smartpolicy/issues",
+  "keywords": ["mcp", "modelcontextprotocol", "authorization", "ai-agents", "smart-contracts", "eip-712", "x402", "base"],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "viem": "^2.21.0",
