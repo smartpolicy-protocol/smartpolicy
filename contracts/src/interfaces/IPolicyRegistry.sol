@@ -54,6 +54,9 @@ interface IPolicyRegistry {
 
     event PolicyCreated(uint256 indexed policyId, address indexed owner, uint8 flags, uint64 expiresAt);
     event PolicyLocked(uint256 indexed policyId);
+    event PolicyOwnershipTransferStarted(
+        uint256 indexed policyId, address indexed currentOwner, address indexed pendingOwner
+    );
     event PolicyOwnershipTransferred(uint256 indexed policyId, address indexed previousOwner, address indexed newOwner);
     event PolicyMetadataUpdated(uint256 indexed policyId, string metadataURI, bytes32 metadataHash);
     event PolicyExpiryUpdated(uint256 indexed policyId, uint64 expiresAt);
@@ -75,9 +78,12 @@ interface IPolicyRegistry {
     error PolicyIsLocked(uint256 policyId);
     error NotPolicyOwner(uint256 policyId, address caller);
     error NotPolicyOwnerOrAdmin(uint256 policyId, address caller);
+    error NotPendingPolicyOwner(uint256 policyId, address caller);
     error PolicyNotTransferable(uint256 policyId);
     error WrongFee(uint256 expected, uint256 provided);
     error ZeroAddress();
+    /// @notice Protocol-ownership renounce is disabled (see PolicyRegistry).
+    error RenounceDisabled();
 
     // ---------------------------------------------------------------------
     // Writes — policy lifecycle (owner only)
@@ -98,8 +104,19 @@ interface IPolicyRegistry {
     ///         enforceable; no further writes of any kind are accepted.
     function lockPolicy(uint256 policyId) external;
 
-    /// @notice Allowed only when FLAG_TRANSFERABLE is set and not locked.
+    /// @notice Begin a two-step ownership handoff. Allowed only when
+    ///         FLAG_TRANSFERABLE is set and the policy is not locked. Sets the
+    ///         pending owner; the transfer completes only when that address calls
+    ///         {acceptPolicyOwnership}. Guards against stranding governance on a
+    ///         mistyped or unusable address. Re-calling overwrites the pending owner.
     function transferPolicyOwnership(uint256 policyId, address newOwner) external;
+
+    /// @notice Complete a pending ownership handoff. Callable only by the address
+    ///         set as pending owner by {transferPolicyOwnership}.
+    function acceptPolicyOwnership(uint256 policyId) external;
+
+    /// @notice The address that may call {acceptPolicyOwnership}, or address(0).
+    function pendingPolicyOwner(uint256 policyId) external view returns (address);
 
     function addAdmin(uint256 policyId, address admin) external payable;
     function removeAdmin(uint256 policyId, address admin) external payable;

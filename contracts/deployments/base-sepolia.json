@@ -1,11 +1,12 @@
 {
   "network": "base-sepolia",
   "chainId": 84532,
-  "deployedAt": "2026-07-05",
+  "version": "v2 (grant-model v2)",
+  "deployedAt": "2026-07-06",
   "deployer": "0xaC7B68fd202717Bc57996c6FA7c1DB39264b4Aee",
   "contracts": {
-    "PolicyRegistry": "0x8BD5f8850c2983219193d4527E113d0e5F8E57Ed",
-    "GrantVerifier": "0x72C01F28659B5b49B8425A4179680c916485F2E6"
+    "PolicyRegistry": "0xd91075CEe40F302aAEBa61AE1889a712879acd37",
+    "GrantVerifier": "0xd8ae4227F9119cCf6f198EBe9018ced7DF117535"
   },
   "fees": {
     "creationFee": "0.0001 ether",
@@ -13,5 +14,10 @@
     "maxCreationFee": "0.01 ether",
     "maxUpdateFee": "0.001 ether"
   },
-  "notes": "Canonical testnet deployment (planned per PLAN.md). Deployed via `smartpolicy-mcp deploy` from embedded bytecode; both contracts source-verified on Blockscout (base-sepolia.blockscout.com). Genesis policy #1: metadataURI ipfs://smartpolicy-genesis-v2 with on-chain metadataHash (keccak256 of the URI). Deployer is a fresh testnet-only key generated 2026-07-05 (funded via Google faucet on Ethereum Sepolia, bridged through the official L1StandardBridge 0xfd0Bf71F60660E2f608ed56e1659C450eB113120); key stored locally outside the repo. Deployer = protocol owner = fee collector. Fresh keys for any mainnet deploy."
+  "previousDeployment": {
+    "note": "v1 (8-field grants), superseded 2026-07-06 by the grant-model v2 audit remediation. Left in place but no longer the canonical default.",
+    "PolicyRegistry": "0x8BD5f8850c2983219193d4527E113d0e5F8E57Ed",
+    "GrantVerifier": "0x72C01F28659B5b49B8425A4179680c916485F2E6"
+  },
+  "notes": "Canonical testnet, grant-model v2. Grant struct gains a signed bytes32 `context` (parameter binding, audit finding H-1); PolicyGate adds onlyAllowedWithGrant (two-factor, M-1); two-step per-policy ownership transfer (M-2); example treasury validates its bound policy (M-3); renounceOwnership disabled (L-1). Both contracts Blockscout-verified. Genesis policy #1: metadataURI ipfs://smartpolicy-genesis-v2. See AUDIT.md. Deployed via `smartpolicy-mcp deploy` (embedded v2 bytecode). Fresh keys for any mainnet deploy."
 }

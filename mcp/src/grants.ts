@@ -14,8 +14,12 @@ export const grantTypes = {
     { name: "nonce", type: "uint256" },
     { name: "issuer", type: "address" },
     { name: "target", type: "address" },
+    { name: "context", type: "bytes32" },
   ],
 } as const;
+
+/** bytes32(0) — a grant that binds the action but not the call's parameters. */
+export const NO_CONTEXT = `0x${"00".repeat(32)}` as Hex;
 
 export interface IssuedGrant {
   grant: {
@@ -27,10 +31,11 @@ export interface IssuedGrant {
     nonce: string;
     issuer: Address;
     target: Address;
+    context: Hex;
   };
   signature: Hex;
   /** The grant as a Solidity tuple literal — paste directly into
-   *  `cast send <target> "fn((uint256,address,bytes32,uint64,uint64,uint256,address,address),bytes)" <tuple> <signature>` */
+   *  `cast send <target> "fn((uint256,address,bytes32,uint64,uint64,uint256,address,address,bytes32),bytes)" <tuple> <signature>` */
   castTuple: string;
   requestedTtlSeconds: number;
   grantedTtlSeconds: number;
@@ -55,6 +60,11 @@ export class GrantIssuer {
    * within one issuer's namespace negligible without any state.
    * @param target the contract that will consume the grant (the integrator/gate).
    *        Only this address may call consumeGrant — prevents mempool griefing.
+   * @param context optional binding of the gated call's sensitive parameters
+   *        (bytes32, default NO_CONTEXT). When set to keccak256(abi.encode(...))
+   *        of the exact parameters, the gate (onlyAllowedWithGrant / withGrant
+   *        with a matching context) rejects any other parameters — so an issuer
+   *        approves "sweep to X", not merely "sweep".
    */
   async issue(
     policyId: bigint,
@@ -62,6 +72,7 @@ export class GrantIssuer {
     action: string,
     ttlSeconds: number,
     target: Address,
+    context: Hex = NO_CONTEXT,
   ): Promise<IssuedGrant> {
     const ttl = Math.min(Math.max(1, ttlSeconds), this.config.maxGrantTtl);
     const now = Math.floor(Date.now() / 1000);
@@ -82,6 +93,7 @@ export class GrantIssuer {
       nonce,
       issuer: this.account.address,
       target,
+      context,
     };
 
     const signature = await this.account.signTypedData({
@@ -106,16 +118,18 @@ export class GrantIssuer {
         nonce: nonce.toString(),
         issuer: grant.issuer,
         target,
+        context,
       },
       signature,
-      castTuple: `(${grant.policyId},${grant.subject},${grant.action},${issuedAt},${now + ttl},${nonce},${grant.issuer},${target})`,
+      castTuple: `(${grant.policyId},${grant.subject},${grant.action},${issuedAt},${now + ttl},${nonce},${grant.issuer},${target},${context})`,
       requestedTtlSeconds: ttlSeconds,
       grantedTtlSeconds: ttl,
       ttlClamped: ttl !== ttlSeconds,
       usage:
         "Pass (grant, signature) to the `target` contract's grant-gated function " +
-        "(PolicyGate.withGrant). Only `target` may consume this grant (front-run " +
-        "protection). Single-use: the nonce is consumed on first successful on-chain use.",
+        "(PolicyGate.onlyAllowedWithGrant / withGrant). Only `target` may consume this grant " +
+        "(front-run protection). Single-use: the nonce is consumed on first successful on-chain use. " +
+        "If context != 0x00…, the gated call's parameters must match keccak256(abi.encode(...)) of what the issuer signed.",
     };
   }
 }

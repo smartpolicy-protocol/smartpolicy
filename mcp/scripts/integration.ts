@@ -84,6 +84,7 @@ const grantTuple = {
   nonce: BigInt(issued.grant.nonce),
   issuer: issued.grant.issuer,
   target: issued.grant.target,
+  context: issued.grant.context,
 };
 const valid = await owner.readContract({
   address: config.verifier,

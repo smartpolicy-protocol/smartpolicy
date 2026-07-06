@@ -12,7 +12,7 @@ import {IPolicyRegistry} from "./interfaces/IPolicyRegistry.sol";
 ///         Stateless except for per-issuer nonce consumption. Immutable.
 contract GrantVerifier is IGrantVerifier, EIP712 {
     bytes32 private constant GRANT_TYPEHASH = keccak256(
-        "Grant(uint256 policyId,address subject,bytes32 action,uint64 issuedAt,uint64 expiresAt,uint256 nonce,address issuer,address target)"
+        "Grant(uint256 policyId,address subject,bytes32 action,uint64 issuedAt,uint64 expiresAt,uint256 nonce,address issuer,address target,bytes32 context)"
     );
 
     /// @inheritdoc IGrantVerifier
@@ -61,7 +61,8 @@ contract GrantVerifier is IGrantVerifier, EIP712 {
                     grant.expiresAt,
                     grant.nonce,
                     grant.issuer,
-                    grant.target
+                    grant.target,
+                    grant.context
                 )
             )
         );

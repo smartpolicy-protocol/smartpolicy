@@ -23,6 +23,7 @@ abstract contract PolicyGate {
     error GrantNotForCaller(address subject, address caller);
     error GrantPolicyMismatch(uint256 expected, uint256 actual);
     error GrantActionMismatch(bytes32 expected, bytes32 actual);
+    error GrantContextMismatch(bytes32 expected, bytes32 actual);
 
     error RegistryMismatch(address gateRegistry, address verifierRegistry);
 
@@ -69,24 +70,69 @@ abstract contract PolicyGate {
         _;
     }
 
-    /// @notice Gate on an off-chain authorization: a short-lived EIP-712 grant
-    ///         signed by an issuer the policy authorized. Consumes the grant's
-    ///         nonce — each grant admits exactly one call.
-    /// @dev The policyId/action binding here is what stops a grant issued for
-    ///      one purpose (e.g. "deposit") from being redeemed against another
-    ///      (e.g. "sweep"). The verifier alone cannot know which action a
-    ///      function represents, so the gate must pin it.
+    /// @notice Gate on an off-chain authorization ALONE: a short-lived EIP-712
+    ///         grant signed by an issuer the policy authorized. The grant is
+    ///         SUFFICIENT — the caller need not be an on-chain member. Use this
+    ///         to authorize non-members off-chain (e.g. a one-time approval for
+    ///         an external address).
+    /// @dev REVOCATION: because this path does NOT consult `isAllowed`, removing
+    ///      a member or setting an action to NOBODY does NOT stop outstanding
+    ///      grants. The kill switch for the grant path is `removeIssuer` (plus
+    ///      grant expiry). If you want on-chain rule/membership revocation to
+    ///      also stop grants, use {onlyAllowedWithGrant} instead.
+    /// @param context binds the call's sensitive parameters. Pass bytes32(0) for
+    ///      no binding, or keccak256(abi.encode(...)) of the exact parameters the
+    ///      issuer approved; the grant's signed `context` must match or the call
+    ///      reverts. This is what lets an issuer approve "sweep to X", not "sweep".
     modifier withGrant(
         uint256 policyId,
         bytes32 action,
+        bytes32 context,
         IGrantVerifier.Grant calldata grant,
         bytes calldata signature
     ) {
+        _verifyAndConsumeGrant(policyId, action, context, grant, signature);
+        _;
+    }
+
+    /// @notice The RECOMMENDED grant gate for fund-moving actions: requires BOTH
+    ///         on-chain permission (`isAllowed`) AND a fresh single-use grant.
+    ///         Two independent factors — registry membership/rules and off-chain
+    ///         issuer approval — must agree. Revoking EITHER (removeMember /
+    ///         setActionRule NOBODY, OR removeIssuer) stops the action.
+    /// @param context see {withGrant}. For money movement, bind the recipient
+    ///      (and ideally amount): keccak256(abi.encode(to, amount)).
+    modifier onlyAllowedWithGrant(
+        uint256 policyId,
+        bytes32 action,
+        bytes32 context,
+        IGrantVerifier.Grant calldata grant,
+        bytes calldata signature
+    ) {
+        if (!policyRegistry.isAllowed(policyId, msg.sender, action)) {
+            revert NotAllowedByPolicy(policyId, msg.sender, action);
+        }
+        _verifyAndConsumeGrant(policyId, action, context, grant, signature);
+        _;
+    }
+
+    /// @dev Binds the grant to (policyId, action, subject=caller, context) and
+    ///      consumes it. The verifier separately enforces target=this contract,
+    ///      the signature, issuer authorization, the validity window, and single
+    ///      use. The gate must pin policyId/action here because the verifier
+    ///      cannot know which action a given function represents.
+    function _verifyAndConsumeGrant(
+        uint256 policyId,
+        bytes32 action,
+        bytes32 context,
+        IGrantVerifier.Grant calldata grant,
+        bytes calldata signature
+    ) private {
         if (address(policyGrantVerifier) == address(0)) revert GrantVerifierNotConfigured();
         if (grant.policyId != policyId) revert GrantPolicyMismatch(policyId, grant.policyId);
         if (grant.action != action) revert GrantActionMismatch(action, grant.action);
         if (grant.subject != msg.sender) revert GrantNotForCaller(grant.subject, msg.sender);
+        if (grant.context != context) revert GrantContextMismatch(context, grant.context);
         policyGrantVerifier.consumeGrant(grant, signature);
-        _;
     }
 }

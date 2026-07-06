@@ -307,12 +307,46 @@ contract PolicyRegistryTest is Test {
         registry.transferPolicyOwnership(id, bob);
     }
 
-    function test_transferWithFlag() public {
+    function test_transferIsTwoStep_completesOnAccept() public {
+        uint256 id = _createPolicy(FLAG_TRANSFERABLE);
+        // step 1: start — owner unchanged, pending set
+        vm.prank(alice);
+        registry.transferPolicyOwnership(id, bob);
+        assertTrue(registry.isOwner(id, alice), "owner must not change until acceptance");
+        assertEq(registry.pendingPolicyOwner(id), bob);
+
+        // step 2: bob accepts — ownership moves, pending cleared
+        vm.prank(bob);
+        registry.acceptPolicyOwnership(id);
+        assertTrue(registry.isOwner(id, bob));
+        assertFalse(registry.isOwner(id, alice));
+        assertEq(registry.pendingPolicyOwner(id), address(0));
+    }
+
+    function test_accept_onlyPendingOwner() public {
         uint256 id = _createPolicy(FLAG_TRANSFERABLE);
         vm.prank(alice);
         registry.transferPolicyOwnership(id, bob);
-        assertTrue(registry.isOwner(id, bob));
-        assertFalse(registry.isOwner(id, alice));
+        // a non-pending address cannot accept
+        vm.expectRevert(abi.encodeWithSelector(IPolicyRegistry.NotPendingPolicyOwner.selector, id, mallory));
+        vm.prank(mallory);
+        registry.acceptPolicyOwnership(id);
+    }
+
+    function test_transfer_pendingOverwritable_oldPendingCannotAccept() public {
+        uint256 id = _createPolicy(FLAG_TRANSFERABLE);
+        vm.startPrank(alice);
+        registry.transferPolicyOwnership(id, bob);
+        registry.transferPolicyOwnership(id, carol); // re-point pending
+        vm.stopPrank();
+        // bob (the old pending) can no longer accept
+        vm.expectRevert(abi.encodeWithSelector(IPolicyRegistry.NotPendingPolicyOwner.selector, id, bob));
+        vm.prank(bob);
+        registry.acceptPolicyOwnership(id);
+        // carol can
+        vm.prank(carol);
+        registry.acceptPolicyOwnership(id);
+        assertTrue(registry.isOwner(id, carol));
     }
 
     function test_transferRejectsZeroAddress() public {
@@ -320,6 +354,12 @@ contract PolicyRegistryTest is Test {
         vm.expectRevert(IPolicyRegistry.ZeroAddress.selector);
         vm.prank(alice);
         registry.transferPolicyOwnership(id, address(0));
+    }
+
+    function test_renounceOwnership_disabled() public {
+        vm.expectRevert(IPolicyRegistry.RenounceDisabled.selector);
+        vm.prank(protocolOwner);
+        registry.renounceOwnership();
     }
 
     // -- fees ----------------------------------------------------------------------

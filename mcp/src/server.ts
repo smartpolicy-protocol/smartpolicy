@@ -112,9 +112,16 @@ export function buildServer(config: Config, registry: Registry, issuer: GrantIss
           .max(86400)
           .default(600)
           .describe("Requested grant lifetime in seconds; clamped to the server's maxGrantTtlSeconds (see grant_issuer_info)"),
+        context: z
+          .string()
+          .regex(/^0x[0-9a-fA-F]{64}$/)
+          .optional()
+          .describe(
+            "Optional bytes32 binding the gated call's parameters. Set to keccak256(abi.encode(...)) of the exact parameters the caller must use (e.g. the recipient and amount for a transfer); the on-chain gate rejects any other parameters. Omit for an action-level grant that does not constrain parameters.",
+          ),
       },
     },
-    async ({ policyId, subject, action, target, ttlSeconds }) => {
+    async ({ policyId, subject, action, target, ttlSeconds, context }) => {
       try {
         if (!issuer) throw new Error("grant issuance disabled on this server (no issuer key configured)");
         await registry.assertChainId();
@@ -130,7 +137,7 @@ export function buildServer(config: Config, registry: Registry, issuer: GrantIss
         if (!allowed.allowed) {
           throw new Error(`policy denies this: ${allowed.reasons.join("; ")}`);
         }
-        return json(await issuer.issue(id, subject, action, ttlSeconds, target));
+        return json(await issuer.issue(id, subject, action, ttlSeconds, target, context as `0x${string}` | undefined));
       } catch (error) {
         return jsonError(error);
       }
@@ -191,6 +198,7 @@ export function buildServer(config: Config, registry: Registry, issuer: GrantIss
             nonce: z.string(),
             issuer: addressSchema,
             target: addressSchema,
+            context: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
           })
           .describe("the grant object exactly as returned by grant_issue"),
         signature: z.string().regex(/^0x[0-9a-fA-F]+$/),
@@ -200,7 +208,7 @@ export function buildServer(config: Config, registry: Registry, issuer: GrantIss
       try {
         return json(
           await registry.verifyGrant(
-            { ...grant, action: grant.action as `0x${string}` },
+            { ...grant, action: grant.action as `0x${string}`, context: grant.context as `0x${string}` },
             signature as `0x${string}`,
           ),
         );

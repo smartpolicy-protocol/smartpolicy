@@ -15,12 +15,13 @@ export interface Config {
   maxGrantTtl: number;
 }
 
-/** Canonical public testnet deployment — the zero-config default. */
+/** Canonical public testnet deployment — the zero-config default.
+ *  Base Sepolia, grant-model v2 (9-field grants with parameter binding). */
 export const SEPOLIA_DEFAULTS = {
-  rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
-  chainId: 11155111,
-  registry: "0x5D127b04d344EfBfb9C127F2B598Cb824D0B8334" as Address,
-  verifier: "0x3510B9427BeadD04D052E0b01248a6A6A1f23dc9" as Address,
+  rpcUrl: "https://sepolia.base.org",
+  chainId: 84532,
+  registry: "0xd91075CEe40F302aAEBa61AE1889a712879acd37" as Address,
+  verifier: "0xd8ae4227F9119cCf6f198EBe9018ced7DF117535" as Address,
 };
 
 /** Parse a positive-integer env var, throwing on NaN/garbage instead of

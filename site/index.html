@@ -296,8 +296,99 @@
     </div>
   </section>
 
-  <section id="integrate">
+  <section id="rules">
     <span class="secno">§ 3</span>
+    <h2>What a policy can express</h2>
+    <p class="prose">The on-chain registry enforces three things directly, with no code to trust
+      but its own:</p>
+    <div class="points">
+      <div class="point">
+        <span class="glyph">i</span>
+        <div>
+          <h3>Who</h3>
+          <p>Member and admin sets. Open membership if you want everyone; a curated list if you
+            don’t. Adding or removing an address is one transaction.</p>
+        </div>
+      </div>
+      <div class="point">
+        <span class="glyph">ii</span>
+        <div>
+          <h3>What</h3>
+          <p>Per-action rules on free-form action names: <code>MEMBERS</code>, <code>ANYONE</code>,
+            <code>NOBODY</code>. Granularity is yours — <code>withdraw.small</code> and
+            <code>withdraw.large</code> can carry different rules.</p>
+        </div>
+      </div>
+      <div class="point">
+        <span class="glyph">iii</span>
+        <div>
+          <h3>When</h3>
+          <p>Policy expiry, and an irreversible <em>lock</em> that freezes the rules while keeping
+            them enforceable.</p>
+        </div>
+      </div>
+    </div>
+    <p class="prose" style="margin-top:1.6rem;">Everything richer — spending limits, budgets,
+      business hours, external facts — lives in <strong>grant issuance</strong>: the policy owner
+      authorizes an issuer (ours, or one they run), and that issuer applies any logic it likes
+      <em>before</em> signing a short-lived, single-use, target-bound grant. Flexible rules
+      off-chain; incorruptible enforcement on-chain. The rule brain can be as smart as your code —
+      the bouncer never bends.</p>
+  </section>
+
+  <section id="example">
+    <span class="secno">§ 4</span>
+    <h2>A real machine-to-machine run</h2>
+    <p class="prose">This is not a mock. The exchange below is a replay of our own test on Base
+      Sepolia — an AI agent buying an authorization artifact from this API, no human in the loop.</p>
+    <p class="codelabel">1 · Agent calls a paid tool, unpaid → the API refuses with a price</p>
+    <pre>POST https://api.smartpolicy.io/mcp        <span class="c">tools/call: policy_create</span>
+<b>HTTP 402</b> { "accepts": [{ "scheme": "exact", "network": "base-sepolia",
+              "maxAmountRequired": "1000",   <span class="c">// 0.001 USDC</span>
+              "asset": "USDC", "payTo": "0xaC7B…4Aee" }] }</pre>
+    <p class="codelabel">2 · Agent signs a USDC payment authorization and retries — no gas, no wallet UI</p>
+    <pre>X-PAYMENT: <span class="c">base64(EIP-3009 transferWithAuthorization, signed by the agent’s key)</span>
+<b>HTTP 200</b> — tool result: the unsigned createPolicy transaction
+X-PAYMENT-RESPONSE: { "success": true,
+  "transaction": <span class="c">"0xb6440ae4ccd79a…"</span> }   <span class="c">// settled on-chain, verifiable</span></pre>
+    <p class="codelabel">3 · What the agent got for its $0.001</p>
+    <pre>{ "to":    "0xd91075CEe40F302aAEBa61AE1889a712879acd37",  <span class="c">// the registry</span>
+  "value": "100000000000000",                             <span class="c">// exact 0.0001 ETH fee</span>
+  "data":  "0xcffeb168…" }  <span class="c">// ready for the agent’s own wallet to sign — we never hold keys</span></pre>
+    <p class="prose" style="margin-top:1.4rem;">Total elapsed: seconds. Total human involvement:
+      none. The payment is a plain USDC transfer you can
+      <a href="https://sepolia.basescan.org/tx/0xb6440ae4ccd79a676883c76a98d7ec84e58d7abddfeaa7a71ace63119ac78ab6">inspect on-chain</a>.</p>
+  </section>
+
+  <section id="pricing">
+    <span class="secno">§ 5</span>
+    <h2>Pricing</h2>
+    <p class="prose">Two meters, both denominated in real money, both small. Reading and verifying
+      are free forever — adoption depends on free reads, so that is structural, not promotional.</p>
+    <dl class="record">
+      <div class="record-row">
+        <dt>policy_check · policy_get · grant_verify</dt>
+        <dd>free, unlimited</dd>
+      </div>
+      <div class="record-row">
+        <dt>grant_issue · policy_create · policy_update (hosted API)</dt>
+        <dd>0.001 USDC per call, paid in-band via x402 — no account, no API key</dd>
+      </div>
+      <div class="record-row">
+        <dt>on-chain write fee (protocol)</dt>
+        <dd>createPolicy 0.0001 ETH · updates 0.00001 ETH — hard-capped at deploy, owner cannot raise beyond 0.01 / 0.001</dd>
+      </div>
+      <div class="record-row">
+        <dt>self-hosting the server</dt>
+        <dd>free and documented; your own issuer key, no protocol privileges lost</dd>
+      </div>
+    </dl>
+    <p class="prose" style="margin-top:1.2rem;"><em>Current figures are testnet pricing; mainnet
+      pricing will be stated here plainly when mainnet exists.</em></p>
+  </section>
+
+  <section id="integrate">
+    <span class="secno">§ 6</span>
     <h2>Integration is one inheritance</h2>
     <p class="codelabel">Solidity — protect any function</p>
     <pre><span class="k">contract</span> <b>Treasury</b> <span class="k">is</span> <b>PolicyGate</b> {
@@ -318,7 +409,7 @@ npx smartpolicy-mcp deploy <span class="c"># bootstrap the full protocol on any 
   </section>
 
   <section id="trust">
-    <span class="secno">§ 4</span>
+    <span class="secno">§ 7</span>
     <h2>Trust properties</h2>
     <p class="prose">The registry asks to sit in your authorization path. That demands more than a
       pitch — these hold by construction:</p>
@@ -335,7 +426,7 @@ npx smartpolicy-mcp deploy <span class="c"># bootstrap the full protocol on any 
   </section>
 
   <section id="record">
-    <span class="secno">§ 5</span>
+    <span class="secno">§ 8</span>
     <h2>Public record</h2>
     <p class="prose">Current deployments — Base Sepolia (canonical testnet) and Ethereum Sepolia.
       Verified source on the linked explorers. Mainnet follows audit; this page will state
@@ -343,11 +434,11 @@ npx smartpolicy-mcp deploy <span class="c"># bootstrap the full protocol on any 
     <dl class="record">
       <div class="record-row">
         <dt>PolicyRegistry · Base Sepolia</dt>
-        <dd><a href="https://base-sepolia.blockscout.com/address/0x8BD5f8850c2983219193d4527E113d0e5F8E57Ed">0x8BD5f8850c2983219193d4527E113d0e5F8E57Ed</a></dd>
+        <dd><a href="https://base-sepolia.blockscout.com/address/0xd91075CEe40F302aAEBa61AE1889a712879acd37">0xd91075CEe40F302aAEBa61AE1889a712879acd37</a></dd>
       </div>
       <div class="record-row">
         <dt>GrantVerifier · Base Sepolia</dt>
-        <dd><a href="https://base-sepolia.blockscout.com/address/0x72C01F28659B5b49B8425A4179680c916485F2E6">0x72C01F28659B5b49B8425A4179680c916485F2E6</a></dd>
+        <dd><a href="https://base-sepolia.blockscout.com/address/0xd8ae4227F9119cCf6f198EBe9018ced7DF117535">0xd8ae4227F9119cCf6f198EBe9018ced7DF117535</a></dd>
       </div>
       <div class="record-row">
         <dt>PolicyRegistry · Eth Sepolia</dt>

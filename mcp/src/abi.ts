@@ -50,7 +50,7 @@ export const registryAbi = parseAbi([
 ]);
 
 export const verifierAbi = parseAbi([
-  "struct Grant { uint256 policyId; address subject; bytes32 action; uint64 issuedAt; uint64 expiresAt; uint256 nonce; address issuer; address target; }",
+  "struct Grant { uint256 policyId; address subject; bytes32 action; uint64 issuedAt; uint64 expiresAt; uint256 nonce; address issuer; address target; bytes32 context; }",
   "function isGrantValid(Grant grant, bytes signature) view returns (bool)",
   "function consumeGrant(Grant grant, bytes signature)",
   "function hashGrant(Grant grant) view returns (bytes32)",

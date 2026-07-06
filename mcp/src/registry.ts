@@ -20,6 +20,7 @@ export interface GrantTuple {
   nonce: string | number | bigint;
   issuer: Address;
   target: Address;
+  context: Hex;
 }
 
 export interface CheckResult {
@@ -192,6 +193,7 @@ export class Registry {
       nonce: BigInt(grant.nonce),
       issuer: grant.issuer,
       target: grant.target,
+      context: grant.context,
     };
     const [valid, nonceUsed] = await Promise.all([
       this.client.readContract({

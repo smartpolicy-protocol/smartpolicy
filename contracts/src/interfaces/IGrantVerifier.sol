@@ -22,6 +22,14 @@ interface IGrantVerifier {
         uint256 nonce; // single-use per issuer
         address issuer; // must satisfy registry.isAuthorizedIssuer(policyId, issuer)
         address target; // the only contract allowed to consumeGrant this grant (the integrator/gate)
+        // Optional binding of the gated call's sensitive parameters. bytes32(0)
+        // means "action-level only" (any parameters). A non-zero value is a
+        // commitment the issuer signs — e.g. keccak256(abi.encode(to, amount)) —
+        // and the gate (PolicyGate.withGrantBound / onlyAllowedWithGrant) checks
+        // the actual call matches. This is what lets an issuer approve "sweep to
+        // THIS address for AT MOST X", not merely "sweep". Without it, a grant
+        // authorizes the action but not where the funds go.
+        bytes32 context;
     }
 
     event GrantConsumed(

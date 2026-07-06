@@ -38,6 +38,7 @@ contract PolicyRegistry is IPolicyRegistry, Ownable2Step {
 
     uint256 private _policyCount;
     mapping(uint256 => Policy) private _policies;
+    mapping(uint256 => address) private _pendingPolicyOwner;
     mapping(uint256 => mapping(address => bool)) private _members;
     mapping(uint256 => uint256) private _memberCounts;
     mapping(uint256 => mapping(address => bool)) private _admins;
@@ -139,9 +140,23 @@ contract PolicyRegistry is IPolicyRegistry, Ownable2Step {
     {
         if (newOwner == address(0)) revert ZeroAddress();
         if (_policies[policyId].flags & FLAG_TRANSFERABLE == 0) revert PolicyNotTransferable(policyId);
+        // Two-step: the transfer only takes effect when `newOwner` calls
+        // acceptPolicyOwnership. This prevents a typo or an unusable address from
+        // permanently stranding governance of the policy (and any immutable
+        // treasury bound to it). Re-calling overwrites the pending owner; the
+        // current owner keeps full control until acceptance.
+        _pendingPolicyOwner[policyId] = newOwner;
+        emit PolicyOwnershipTransferStarted(policyId, _policies[policyId].owner, newOwner);
+    }
+
+    /// @inheritdoc IPolicyRegistry
+    function acceptPolicyOwnership(uint256 policyId) external exists(policyId) {
+        address pending = _pendingPolicyOwner[policyId];
+        if (msg.sender != pending) revert NotPendingPolicyOwner(policyId, msg.sender);
         address previousOwner = _policies[policyId].owner;
-        _policies[policyId].owner = newOwner;
-        emit PolicyOwnershipTransferred(policyId, previousOwner, newOwner);
+        _policies[policyId].owner = pending;
+        delete _pendingPolicyOwner[policyId];
+        emit PolicyOwnershipTransferred(policyId, previousOwner, pending);
     }
 
     /// @inheritdoc IPolicyRegistry
@@ -378,6 +393,11 @@ contract PolicyRegistry is IPolicyRegistry, Ownable2Step {
         return _policyCount;
     }
 
+    /// @inheritdoc IPolicyRegistry
+    function pendingPolicyOwner(uint256 policyId) external view returns (address) {
+        return _pendingPolicyOwner[policyId];
+    }
+
     function _isActive(uint256 policyId) internal view returns (bool) {
         Policy storage p = _policies[policyId];
         if (p.owner == address(0)) return false;
@@ -405,6 +425,15 @@ contract PolicyRegistry is IPolicyRegistry, Ownable2Step {
         if (collector == address(0)) revert ZeroAddress();
         feeCollector = collector;
         emit FeeCollectorUpdated(collector);
+    }
+
+    /// @notice Renouncing protocol ownership is DISABLED. An owner must always
+    ///         exist so fee parameters and the collector remain adjustable within
+    ///         their immutable caps; renouncing would freeze them permanently on
+    ///         this non-upgradeable contract. (Ownership can still be handed off
+    ///         via the inherited two-step transferOwnership/acceptOwnership.)
+    function renounceOwnership() public pure override {
+        revert RenounceDisabled();
     }
 
     /// @notice Push accumulated fees to the collector. Callable by anyone:

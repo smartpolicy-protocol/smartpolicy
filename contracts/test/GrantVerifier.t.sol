@@ -41,7 +41,8 @@ contract GrantVerifierTest is Test {
             expiresAt: uint64(block.timestamp + 10 minutes),
             nonce: nonce,
             issuer: issuer,
-            target: address(this) // this test contract calls consumeGrant directly
+            target: address(this), // this test contract calls consumeGrant directly
+            context: bytes32(0)
         });
     }
 
@@ -137,6 +138,18 @@ contract GrantVerifierTest is Test {
     function test_garbageSignatureRejectedNotReverted() public view {
         IGrantVerifier.Grant memory grant = _grant(1);
         assertFalse(verifier.isGrantValid(grant, hex"deadbeef"));
+    }
+
+    function test_tamperedContextRejected() public {
+        // context is signed: changing it after signing must invalidate the grant
+        IGrantVerifier.Grant memory grant = _grant(1);
+        grant.context = keccak256("intended-params");
+        bytes memory sig = _sign(grant, issuerKey);
+        assertTrue(verifier.isGrantValid(grant, sig));
+        grant.context = keccak256("substituted-params"); // tamper after signing
+        assertFalse(verifier.isGrantValid(grant, sig));
+        vm.expectRevert(IGrantVerifier.GrantSignatureInvalid.selector);
+        verifier.consumeGrant(grant, sig);
     }
 
     // -- policy state --------------------------------------------------------------
