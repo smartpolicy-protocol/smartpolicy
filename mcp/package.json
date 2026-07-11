@@ -1,6 +1,6 @@
 {
   "name": "@smartpolicy/mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "SmartPolicy MCP server — runtime authorization for AI agents and smart contracts",
   "type": "module",
   "bin": {
