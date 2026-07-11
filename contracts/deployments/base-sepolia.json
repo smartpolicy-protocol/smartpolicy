@@ -6,7 +6,7 @@
   "deployer": "0xaC7B68fd202717Bc57996c6FA7c1DB39264b4Aee",
   "contracts": {
     "PolicyRegistry": "0xd91075CEe40F302aAEBa61AE1889a712879acd37",
-    "GrantVerifier": "0xd8ae4227F9119cCf6f198EBe9018ced7DF117535"
+    "GrantVerifier": "0xD8aE4227f9119CcF6F198EBE9018cED7dF117535"
   },
   "fees": {
     "creationFee": "0.0001 ether",

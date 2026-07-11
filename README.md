@@ -68,7 +68,7 @@ every decision (chain, fees, trust model, what was deliberately dropped from v1)
 ```
 contracts/   Solidity core: PolicyRegistry, PolicyGate, interfaces (Foundry)
 mcp/         MCP server + REST API (TypeScript, x402 metering)
-sdk/         TypeScript client SDK (planned)
+sdk/         TypeScript client SDK (@smartpolicy/sdk) — reads, grants, tx-building
 docs/        Integration guides (planned)
 ```
 

@@ -21,7 +21,7 @@ export const SEPOLIA_DEFAULTS = {
   rpcUrl: "https://sepolia.base.org",
   chainId: 84532,
   registry: "0xd91075CEe40F302aAEBa61AE1889a712879acd37" as Address,
-  verifier: "0xd8ae4227F9119cCf6f198EBe9018ced7DF117535" as Address,
+  verifier: "0xD8aE4227f9119CcF6F198EBE9018cED7dF117535" as Address,
 };
 
 /** Parse a positive-integer env var, throwing on NaN/garbage instead of

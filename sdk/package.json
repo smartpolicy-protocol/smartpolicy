@@ -1,0 +1,38 @@
+{
+  "name": "@smartpolicy/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for SmartPolicy — check on-chain authorization policies, issue EIP-712 grants, and build policy transactions for AI agents and backends",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "tsc",
+    "example": "tsx examples/quickstart.ts",
+    "test": "tsx test/sdk.test.ts"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smartpolicy-protocol/smartpolicy.git",
+    "directory": "sdk"
+  },
+  "homepage": "https://smartpolicy.io",
+  "bugs": "https://github.com/smartpolicy-protocol/smartpolicy/issues",
+  "keywords": ["smartpolicy", "authorization", "ai-agents", "smart-contracts", "eip-712", "x402", "base", "access-control", "web3"],
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
